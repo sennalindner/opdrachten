@@ -34,7 +34,7 @@ footer{color:var(--mu);font-size:.85rem;margin-top:24px}
 :focus-visible{outline:2px solid var(--ac2);outline-offset:2px}
 </style></head><body><div class="w">
 <h1>Computerarchitectuur</h1>
-<p class="mu">Oefenvragen in toetsstijl bij de module Enigma. Elk hoofdstuk bevat meerkeuzevragen en open vragen, samen goed voor zo’n 30 minuten werk. Bij open vragen schrijf je eerst je eigen antwoord en vergelijk je daarna met het modelantwoord. De toets van 10 vragen bevat alleen automatisch nakijkbare vragen.</p>
+<p class="mu">Oefenvragen in toetsstijl bij de module Enigma. Elk hoofdstuk bevat meerkeuzevragen en open vragen. Maak alle vragen en lever ze in. Pas daarna zie je de antwoorden en modelantwoorden. De toets van 10 vragen bevat alleen meerkeuze- en invulvragen.</p>
 <nav id="nav"></nav><div id="bar"></div>
 <details id="sim"><summary>Simulator: het programma uit Aan de slag 23</summary>
 <p>Vul een getal M in en loop het programma stap voor stap door. Kijk hoe de registers veranderen.</p>
@@ -183,7 +183,7 @@ const Q=[
 [6,'v','Waarom is de ontkoppeling van toepassingslaag en fysieke laag voordelig? Geef een voorbeeld.',['Een nieuwe toepassing zoals Skype kan werken zonder nieuwe kabels. Een nieuwe fysieke technologie heeft meteen een grote markt, namelijk alle internettoepassingen.'],4,''],
 [6,'v','Waarom is best-effort transport een probleem voor e-mail maar niet voor telefonie?',['Bij e-mail is elke fout onacceptabel, terwijl bij best-effort pakketten kunnen verdwijnen of in de verkeerde volgorde aankomen. Bij telefonie is een kleine storing te verdragen, maar vertraging is vervelend.'],4,'']
 ];
-let cur=0,toets=false,L=[],A=[],R={},S;
+let cur=0,toets=false,L=[],A=[],R={},S,T=[],done=false;
 const shuf=a=>[...a].sort(()=>Math.random()-.5);
 // Simulator
 const PG=["LOAD R1,#0","LOAD R2,#1","LOAD R3,#1","HERHAAL: CMP R3,M","JNL KLAAR   ; spring als R3 niet kleiner is dan M","ADD R1,R1,#1","ADD R2,R2,#2","ADD R3,R3,R2","JMP HERHAAL","KLAAR: einde"];
@@ -199,12 +199,46 @@ function go(i){toets=i=="t";cur=toets?-1:+i;L=toets?shuf(Q.filter(q=>q[1]!='v'))
   else if(q[1]=='v')h+='<textarea class=tx id=t'+i+' rows=4 placeholder="Schrijf je antwoord in eigen woorden"></textarea>';
   else if(q[1]=="n")h+="<input type=text class=tx id=t"+i+" placeholder='Jouw antwoord' autocomplete=off>";
   else{A[i]=shuf(q[3].map((_,j)=>j));h+="<ol id=o"+i+"></ol>"}
-  if(!toets)h+="<button class=go onclick=grade("+i+")>"+(q[1]=='v'?'Toon modelantwoord':'Controleer')+"</button>";
+  if(0)h+="<button class=go onclick=grade("+i+")>"+(q[1]=='v'?'Toon modelantwoord':'Controleer')+"</button>";
   d.innerHTML=h+"<div class=fb id=f"+i+"></div>";$("qs").append(d);if(q[1]=="o")ol(i)});
- if(toets)$("end").innerHTML="<button class=go onclick=lever()>Lever in</button>";
+ T=[];done=false;$("end").innerHTML="<div class=card><div class=t>Inleveren</div><p>Beantwoord alle vragen en lever ze in. Daarna zie je de antwoorden en je score.</p><p><input type=text class=tx id=nm placeholder='Voor- en achternaam'> <input type=text class=tx id=kl placeholder='Klas'></p><button class=go onclick=inl()>Inleveren</button><div class=fb id=msg></div></div>";
  upd()}
+// Google Formulier: vul hier de gegevens in om inzendingen te ontvangen. Leeg = leerling downloadt een bestand.
+const FORM={flow:'',url:'https://docs.google.com/forms/d/e/1FAIpQLSdX8JryVE8mQBNlW2Oazu9GLG7WfXOEV0F0mqG1xWfIR5hsWA/formResponse',naam: 'entry.2077484045',klas:'entry.1628932274',hoofdstuk:'entry.501554727',antwoorden:'entry.1204563038',score:'entry.1777581711'};
+function nw(){go('t')}
+function ans(i){const q=L[i];
+ if(q[1]=='m'){const c=document.querySelector('input[name=r'+i+']:checked');return c?q[3][+c.value]:null}
+ if(q[1]=='o')return T[i]?A[i].map(j=>q[3][j]).join(' > '):null;
+ return $('t'+i).value.trim()||null}
+function stuurNaarForm(velden){
+ return new Promise(res=>{
+  const n='fr'+Date.now(),ifr=document.createElement('iframe'),f=document.createElement('form');
+  ifr.name=n;ifr.style.display='none';
+  f.method='POST';f.action=FORM.url;f.target=n;f.style.display='none';
+  for(const [k,v] of Object.entries(velden)){const t=document.createElement('textarea');t.name=k;t.value=v;f.appendChild(t)}
+  let klaar=false;
+  const fin=()=>{if(klaar)return;klaar=true;setTimeout(()=>{f.remove();ifr.remove()},500);res(true)};
+  ifr.onload=fin;
+  document.body.append(ifr,f);
+  f.submit();
+  setTimeout(fin,4000);
+ });
+}
+async function inl(){const nm=$('nm').value.trim(),kl=$('kl').value.trim(),m=$('msg'),
+ open=L.map((q,i)=>ans(i)===null?i+1:0).filter(Boolean);
+ if(!nm||!kl||open.length){m.className='fb no';m.textContent=!nm||!kl?'Vul je naam en klas in.':'Beantwoord eerst alle vragen. Nog open: vraag '+open.join(', ')+'.';return}
+ const lbl=toets?'Toets (10 vragen)':C[cur],cl=L.map((q,i)=>i).filter(i=>L[i][1]!='v'),s=cl.filter(i=>ok(i)).length,
+ sc=s+' van '+cl.length+' gesloten vragen goed',
+ tx=L.map((q,i)=>(i+1)+'. '+q[2].replace(/<[^>]+>/g,'').replace(/&gt;/g,'>')+'\n   Antwoord: '+ans(i)+(q[1]=='v'?'':'  ['+(ok(i)?'goed':'fout')+']')).join('\n\n');
+ let sent=false;
+ if(FORM.flow){try{await fetch(FORM.flow,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({naam:nm,klas:kl,hoofdstuk:lbl,score:sc,antwoorden:tx})});sent=true}catch(e){}}
+ if(!sent&&FORM.url){sent=await stuurNaarForm({[FORM.naam]:nm,[FORM.klas]:kl,[FORM.hoofdstuk]:lbl,[FORM.antwoorden]:tx,[FORM.score]:sc})}
+ if(!sent){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([nm+' ('+kl+')\n'+lbl+'\n'+sc+'\n\n'+tx],{type:'text/plain'}));a.download=(nm+'-'+lbl).replace(/[^\w-]+/g,'_')+'.txt';a.click()}
+ done=true;$('qs').querySelectorAll('input,textarea').forEach(e=>e.disabled=true);
+ L.forEach((q,i)=>grade(i,true));
+ $('end').innerHTML='<div class=card><b>Ingeleverd'+(sent?'.':' als bestand: lever het gedownloade bestand in bij je docent.')+'</b><br>'+sc+'. Vergelijk bij de open vragen je antwoord met het modelantwoord.'+(toets?'<br><button class=go onclick=nw()>Nieuwe toets</button>':'')+'</div>';scrollTo(0,0)}
 function ol(i){$("o"+i).innerHTML=A[i].map((j,p)=>"<li>"+L[i][3][j]+" <button class=s onclick=mv("+i+","+p+",-1) aria-label=omhoog>↑</button><button class=s onclick=mv("+i+","+p+",1) aria-label=omlaag>↓</button></li>").join("")}
-function mv(i,p,d){const a=A[i],t=p+d;if(t<0||t>=a.length)return;[a[p],a[t]]=[a[t],a[p]];ol(i)}
+function mv(i,p,d){const a=A[i],t=p+d;if(done||t<0||t>=a.length)return;T[i]=1;[a[p],a[t]]=[a[t],a[p]];ol(i)}
 function ok(i){const q=L[i];
  if(q[1]=="m"){const c=document.querySelector("input[name=r"+i+"]:checked");return c?+c.value==q[4]:null}
  if(q[1]=="n"){const v=$("t"+i).value.toLowerCase().replace(/miljoen|%|\s/g,"").replace(",",".");return v?q[3].includes(v):null}
@@ -218,8 +252,8 @@ function grade(i,force){if(L[i][1]=='v')return opn(i);const r=ok(i),f=$("f"+i);
 function lever(){let s=0;L.forEach((q,i)=>{if(grade(i,true))s++});
  $("end").innerHTML="<div class=card><b>Score: "+s+" van "+L.length+" · cijfer "+(1+9*s/L.length).toFixed(1).replace(".",",")+"</b><br><button class=go onclick=go('t')>Nieuwe toets</button></div>";scrollTo(0,0)}
 function upd(){const n=Object.keys(R).length,k=+Object.values(R).reduce((a,b)=>a+(+b),0).toFixed(1),m=L.reduce((a,q)=>a+(q[1]=='v'?q[4]:1),0);
- $("bar").textContent=toets?"Toets: "+L.length+" willekeurige vragen uit alle hoofdstukken":L.length+" vragen · beantwoord: "+n+" · score: "+k}
-$("nav").innerHTML=C.map((c,i)=>"<button class=chip data-i="+i+">"+c+"</button>").join("")+"<button class=chip data-i=-1>Alle vragen</button><button class='chip hot' data-i=t>Toets (10 vragen)</button>";
+ $("bar").textContent=toets?"Toets: "+L.length+" willekeurige vragen uit alle hoofdstukken":L.length+" vragen · richttijd ca. "+m+" min"+(done?" · score: "+k:"")}
+$("nav").innerHTML=C.map((c,i)=>"<button class=chip data-i="+i+">"+c+"</button>").join("")+"<button class='chip hot' data-i=t>Toets (10 vragen)</button>";
 $("nav").onclick=e=>{const b=e.target.closest("button");if(b)go(b.dataset.i)};
 rs();go(0);
 </script></body></html>
