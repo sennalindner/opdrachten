@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Computerarchitectuur – oefenen voor de toets</title>
+<title>Computerarchitectuur</title>
 <style>
 :root{--bg:#eef3f5;--cd:#fff;--tx:#14202b;--mu:#566574;--ac:#0b7a75;--ac2:#e8a317;--ok:#13683f;--okb:#dff3e7;--no:#a4251c;--nob:#fbe7e5;--bd:#cfdadf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f171d;--cd:#17232c;--tx:#e6eef2;--mu:#9bacb8;--ac:#4cc9c0;--ac2:#f2b84b;--ok:#6fdc9e;--okb:#12301f;--no:#ff9b92;--nob:#3a1b19;--bd:#2a3b47}}
@@ -34,7 +34,7 @@ footer{color:var(--mu);font-size:.85rem;margin-top:24px}
 :focus-visible{outline:2px solid var(--ac2);outline-offset:2px}
 </style></head><body><div class="w">
 <h1>Computerarchitectuur</h1>
-<p class="mu">Oefenvragen in toetsstijl bij de module Enigma. Elk hoofdstuk bevat meerkeuzevragen en open vragen. Maak alle vragen en lever ze in. Pas daarna zie je de antwoorden en modelantwoorden. De toets van 10 vragen bevat alleen meerkeuze- en invulvragen.</p>
+<p class="mu">Opdrachten bij de module Enigma. Elk hoofdstuk bevat meerkeuzevragen en open vragen. Maak alle vragen en lever ze in.</p>
 <nav id="nav"></nav><div id="bar"></div>
 <details id="sim"><summary>Simulator: het programma uit Aan de slag 23</summary>
 <p>Vul een getal M in en loop het programma stap voor stap door. Kijk hoe de registers veranderen.</p>
@@ -252,7 +252,7 @@ function grade(i,force){if(L[i][1]=='v')return opn(i);const r=ok(i),f=$("f"+i);
 function lever(){let s=0;L.forEach((q,i)=>{if(grade(i,true))s++});
  $("end").innerHTML="<div class=card><b>Score: "+s+" van "+L.length+" · cijfer "+(1+9*s/L.length).toFixed(1).replace(".",",")+"</b><br><button class=go onclick=go('t')>Nieuwe toets</button></div>";scrollTo(0,0)}
 function upd(){const n=Object.keys(R).length,k=+Object.values(R).reduce((a,b)=>a+(+b),0).toFixed(1),m=L.reduce((a,q)=>a+(q[1]=='v'?q[4]:1),0);
- $("bar").textContent=toets?"Toets: "+L.length+" willekeurige vragen uit alle hoofdstukken":L.length+" vragen · richttijd ca. "+m+" min"+(done?" · score: "+k:"")}
+ $("bar").textContent=toets?"Toets: "+L.length+" willekeurige vragen uit alle hoofdstukken":L.length+" vragen"+(done?" · score: "+k:"")}
 $("nav").innerHTML=C.map((c,i)=>"<button class=chip data-i="+i+">"+c+"</button>").join("")+"<button class='chip hot' data-i=t>Toets (10 vragen)</button>";
 $("nav").onclick=e=>{const b=e.target.closest("button");if(b)go(b.dataset.i)};
 rs();go(0);
